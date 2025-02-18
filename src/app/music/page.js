@@ -18,6 +18,7 @@ export default function MusicSearch() {
     JSON.parse(Cookies.get("favoriteSongs") || "[]")
   );
   const [isInFavorites, setIsInFavorites] = useState(false);
+  const [isAdding, setIsAdding] = useState({});
   const router = useRouter();
   const playerRef = useRef(null);
 
@@ -57,11 +58,10 @@ export default function MusicSearch() {
   // Play next video automatically
   const handleEnd = () => {
     if (isInFavorites) {
-      // Loop through the favorite songs
       if (currentIndex < favoriteSongs.length - 1) {
         setCurrentIndex(currentIndex + 1);
       } else {
-        setCurrentIndex(0); // Loop back to the first song
+        setCurrentIndex(0);
       }
     } else {
       if (currentIndex < videos.length - 1) {
@@ -73,19 +73,30 @@ export default function MusicSearch() {
   // Toggle between regular search results and favorite songs
   const toggleFavoriteSection = () => {
     setIsInFavorites(!isInFavorites);
-    setCurrentIndex(0); // Reset the current index to the first song when switching sections
+    setCurrentIndex(0);
   };
 
-  // Add song to favorite
-  const addToFavorites = (song) => {
-    if (!favoriteSongs.find((item) => item.id === song.id)) {
-      const updatedFavorites = [...favoriteSongs, song];
+  // Add song to favorites with temporary green effect
+  const handleAddToFavorites = (video) => {
+    setIsAdding((prev) => ({ ...prev, [video.id]: true }));
+    setTimeout(() => {
+      addToFavorites(video);
+      setIsAdding((prev) => ({ ...prev, [video.id]: false }));
+    }, 300);
+  };
+
+  // Add song to favorite list
+  const addToFavorites = (video) => {
+    if (!favoriteSongs.find((song) => song.id === video.id)) {
+      const updatedFavorites = [...favoriteSongs, video];
       setFavoriteSongs(updatedFavorites);
-      Cookies.set("favoriteSongs", JSON.stringify(updatedFavorites), { expires: 365 });
+      Cookies.set("favoriteSongs", JSON.stringify(updatedFavorites), {
+        expires: 365,
+      });
     }
   };
 
-  // Remove song from favorite
+  // Remove song from favorites
   const removeFromFavorites = (song) => {
     const updatedFavorites = favoriteSongs.filter((item) => item.id !== song.id);
     setFavoriteSongs(updatedFavorites);
@@ -168,7 +179,7 @@ export default function MusicSearch() {
         <div className="flex justify-center mt-6 px-4">
           <ReactPlayer
             ref={playerRef}
-            url={`https://www.youtube.com/watch?v=${isInFavorites ? favoriteSongs[currentIndex].id : videos[currentIndex].id}`}
+            url={`https://www.youtube.com/watch?v=${isInFavorites ? favoriteSongs[currentIndex]?.id : videos[currentIndex]?.id}`}
             width="100%"
             height="300px"
             playing={playing}
@@ -193,14 +204,18 @@ export default function MusicSearch() {
           >
             <h2 className="text-lg font-bold mb-2">{video.title}</h2>
             <img src={video.thumbnail} alt={video.title} className="rounded-lg mx-auto" />
+
             {!isInFavorites && (
               <button
-                className="bg-blue-600 px-4 py-2 mt-2 rounded-lg hover:bg-blue-700"
-                onClick={() => addToFavorites(video)}
+                className={`px-4 py-2 mt-2 rounded-lg ${
+                  isAdding[video.id] ? "bg-green-600" : "bg-blue-600 hover:bg-blue-700"
+                }`}
+                onClick={() => handleAddToFavorites(video)}
               >
                 Add to Favorites
               </button>
             )}
+            
             {isInFavorites && (
               <button
                 className="bg-red-600 px-4 py-2 mt-2 rounded-lg hover:bg-red-700"
