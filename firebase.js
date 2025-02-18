@@ -5,13 +5,13 @@ import { getStorage } from "firebase/storage";
 
 // ✅ Use environment variables
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
-  measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID,
+    apiKey: "AIzaSyDXXfevelqEDAPxE4138lhtQvGiYKnpMis",
+    authDomain: "music-1bccf.firebaseapp.com",
+    projectId: "music-1bccf",
+    storageBucket: "music-1bccf.firebasestorage.app",
+    messagingSenderId: "991695374046",
+    appId: "1:991695374046:web:8e9f80af7ad4eb2176644f",
+    measurementId: "G-RPQGGYY6L9"
   };
 
 // ✅ Initialize Firebase
