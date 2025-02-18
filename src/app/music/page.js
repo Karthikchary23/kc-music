@@ -5,7 +5,6 @@ import ReactPlayer from "react-player";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 
-
 export default function MusicSearch() {
   const [searchTerm, setSearchTerm] = useState("");
   const [videos, setVideos] = useState([]);
@@ -15,6 +14,10 @@ export default function MusicSearch() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [playing, setPlaying] = useState(true);
   const [showHistory, setShowHistory] = useState(false);
+  const [favoriteSongs, setFavoriteSongs] = useState(
+    JSON.parse(Cookies.get("favoriteSongs") || "[]")
+  );
+  const [isInFavorites, setIsInFavorites] = useState(false);
   const router = useRouter();
   const playerRef = useRef(null);
 
@@ -43,7 +46,7 @@ export default function MusicSearch() {
       const newHistory = [
         searchQuery,
         ...history.filter((h) => h !== searchQuery),
-      ].slice(0, 5);
+      ].slice(0, 10);
       setHistory(newHistory);
       Cookies.set("searchHistory", JSON.stringify(newHistory), { expires: 1 });
     } catch (error) {
@@ -53,9 +56,40 @@ export default function MusicSearch() {
 
   // Play next video automatically
   const handleEnd = () => {
-    if (currentIndex < videos.length - 1) {
-      setCurrentIndex(currentIndex + 1);
+    if (isInFavorites) {
+      // Loop through the favorite songs
+      if (currentIndex < favoriteSongs.length - 1) {
+        setCurrentIndex(currentIndex + 1);
+      } else {
+        setCurrentIndex(0); // Loop back to the first song
+      }
+    } else {
+      if (currentIndex < videos.length - 1) {
+        setCurrentIndex(currentIndex + 1);
+      }
     }
+  };
+
+  // Toggle between regular search results and favorite songs
+  const toggleFavoriteSection = () => {
+    setIsInFavorites(!isInFavorites);
+    setCurrentIndex(0); // Reset the current index to the first song when switching sections
+  };
+
+  // Add song to favorite
+  const addToFavorites = (song) => {
+    if (!favoriteSongs.find((item) => item.id === song.id)) {
+      const updatedFavorites = [...favoriteSongs, song];
+      setFavoriteSongs(updatedFavorites);
+      Cookies.set("favoriteSongs", JSON.stringify(updatedFavorites), { expires: 365 });
+    }
+  };
+
+  // Remove song from favorite
+  const removeFromFavorites = (song) => {
+    const updatedFavorites = favoriteSongs.filter((item) => item.id !== song.id);
+    setFavoriteSongs(updatedFavorites);
+    Cookies.set("favoriteSongs", JSON.stringify(updatedFavorites), { expires: 365 });
   };
 
   // Persist playback state when reopening the app
@@ -119,12 +153,22 @@ export default function MusicSearch() {
         </button>
       </div>
 
+      {/* Favorite Button */}
+      <div className="flex justify-center mb-6">
+        <button
+          className="bg-yellow-600 px-6 py-2 rounded-lg hover:bg-yellow-700"
+          onClick={toggleFavoriteSection}
+        >
+          {isInFavorites ? "Back to Search" : "Favorites"}
+        </button>
+      </div>
+
       {/* Video Player */}
       {videos.length > 0 && (
         <div className="flex justify-center mt-6 px-4">
           <ReactPlayer
             ref={playerRef}
-            url={`https://www.youtube.com/watch?v=${videos[currentIndex].id}`}
+            url={`https://www.youtube.com/watch?v=${isInFavorites ? favoriteSongs[currentIndex].id : videos[currentIndex].id}`}
             width="100%"
             height="300px"
             playing={playing}
@@ -136,7 +180,7 @@ export default function MusicSearch() {
 
       {/* Video Results */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 px-4 mt-6">
-        {videos.map((video, index) => (
+        {(isInFavorites ? favoriteSongs : videos).map((video, index) => (
           <div
             key={video.id}
             className={`bg-gray-800 p-4 rounded-lg text-center cursor-pointer ${
@@ -149,6 +193,22 @@ export default function MusicSearch() {
           >
             <h2 className="text-lg font-bold mb-2">{video.title}</h2>
             <img src={video.thumbnail} alt={video.title} className="rounded-lg mx-auto" />
+            {!isInFavorites && (
+              <button
+                className="bg-blue-600 px-4 py-2 mt-2 rounded-lg hover:bg-blue-700"
+                onClick={() => addToFavorites(video)}
+              >
+                Add to Favorites
+              </button>
+            )}
+            {isInFavorites && (
+              <button
+                className="bg-red-600 px-4 py-2 mt-2 rounded-lg hover:bg-red-700"
+                onClick={() => removeFromFavorites(video)}
+              >
+                Remove from Favorites
+              </button>
+            )}
           </div>
         ))}
       </div>
